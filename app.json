@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "FieldXReport",
+    "slug": "FieldXReport",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.akhilamurari.fieldreportx"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.akhilamurari.fieldreportx"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FieldReportX to use your location for geotagging field reports."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FieldReportX to access your camera to attach photos to reports."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FieldReportX to access your photos to attach to reports."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1a1a2e"
+        }
+      ]
+    ]
+  }
+}
