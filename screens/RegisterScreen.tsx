@@ -43,10 +43,11 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       setLoading(true);
       await registerUser(email, password);
+      // Firebase automatically logs in after registration
+      // App.tsx will detect auth state change and navigate to Home
       Alert.alert(
         'Success',
-        'Account created successfully!',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        'Account created successfully! You are now logged in.'
       );
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message);
