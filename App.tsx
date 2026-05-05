@@ -1,6 +1,6 @@
 // App.tsx
 // Main entry point for FieldReportX
-// Sets up navigation and authentication state
+// Sets up navigation, authentication state and SQLite database
 
 import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,7 +8,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './services/firebase';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
+import { initDatabase } from './services/database';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -33,6 +34,9 @@ function MainTabs() {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#ddd',
+          paddingBottom: 5,
+          paddingTop: 5,
+          height: 60,
         },
         headerShown: false,
       }}
@@ -40,22 +44,42 @@ function MainTabs() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarLabel: 'Home' }}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>🏠</Text>
+          ),
+        }}
       />
       <Tab.Screen
         name="NewReport"
         component={ReportFormScreen}
-        options={{ tabBarLabel: 'New Report' }}
+        options={{
+          tabBarLabel: 'New Report',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>📋</Text>
+          ),
+        }}
       />
       <Tab.Screen
         name="MyReports"
         component={MyReportsScreen}
-        options={{ tabBarLabel: 'My Reports' }}
+        options={{
+          tabBarLabel: 'My Reports',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>📁</Text>
+          ),
+        }}
       />
       <Tab.Screen
         name="Map"
         component={MapScreen}
-        options={{ tabBarLabel: 'Map' }}
+        options={{
+          tabBarLabel: 'Map',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>🗺️</Text>
+          ),
+        }}
       />
     </Tab.Navigator>
   );
@@ -66,12 +90,21 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen for auth state changes
   useEffect(() => {
+    // Initialise SQLite database
+    try {
+      initDatabase();
+      console.log('Database initialised successfully');
+    } catch (error) {
+      console.error('Database initialisation error:', error);
+    }
+
+    // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
@@ -87,6 +120,15 @@ export default function App() {
         }}
       >
         <ActivityIndicator size="large" color="#1a1a2e" />
+        <Text
+          style={{
+            marginTop: 12,
+            color: '#666',
+            fontSize: 16,
+          }}
+        >
+          Loading FieldReportX...
+        </Text>
       </View>
     );
   }
