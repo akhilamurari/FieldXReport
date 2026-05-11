@@ -96,7 +96,7 @@ export default function MyReportsScreen({ navigation }: any) {
             key={report.id}
             style={styles.reportCard}
             onPress={() =>
-              navigation.navigate('NewReport', { report })
+              navigation.navigate('ReportDetail', { report })
             }
           >
             {/* Status Badge */}
@@ -130,6 +130,10 @@ export default function MyReportsScreen({ navigation }: any) {
             <Text style={styles.reportDate}>
               🕐 {formatDate(report.createdAt)}
             </Text>
+
+            {/* Tap hint */}
+            <Text style={styles.tapHint}>Tap to view details →</Text>
+
           </TouchableOpacity>
         ))
       )}
@@ -238,6 +242,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginTop: 4,
+  },
+  tapHint: {
+    fontSize: 11,
+    color: '#4a90d9',
+    marginTop: 8,
+    textAlign: 'right',
   },
   footer: {
     height: 40,

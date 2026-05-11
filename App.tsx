@@ -24,6 +24,7 @@ import HomeScreen from './screens/HomeScreen';
 import ReportFormScreen from './screens/ReportFormScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import MapScreen from './screens/MapScreen';
+import ReportDetailScreen from './screens/ReportDetailScreen';
 
 // Create navigators
 const Stack = createStackNavigator();
@@ -168,10 +169,14 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          // User is logged in — show main app
-          <Stack.Screen name="Main" component={MainTabs} />
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen
+              name="ReportDetail"
+              component={ReportDetailScreen}
+            />
+          </>
         ) : (
-          // User is not logged in — show auth screens
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
