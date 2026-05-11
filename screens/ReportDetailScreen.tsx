@@ -1,6 +1,6 @@
 // screens/ReportDetailScreen.tsx
 // Report detail screen for FieldReportX
-// Shows full details of a submitted report
+// Shows full details of a submitted report including photo
 
 import React from 'react';
 import {
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 
 export default function ReportDetailScreen({ route, navigation }: any) {
@@ -82,6 +83,23 @@ export default function ReportDetailScreen({ route, navigation }: any) {
         <Text style={styles.cardLabel}>Notes</Text>
         <Text style={styles.cardValue}>{report.notes}</Text>
       </View>
+
+      {/* Photo */}
+      {report.photoUrl ? (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Photo</Text>
+          <Image
+            source={{ uri: report.photoUrl }}
+            style={styles.photo}
+            resizeMode="cover"
+          />
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Photo</Text>
+          <Text style={styles.noPhoto}>No photo attached</Text>
+        </View>
+      )}
 
       {/* Submitted At */}
       <View style={styles.card}>
@@ -182,6 +200,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginTop: 4,
+  },
+  photo: {
+    width: '100%',
+    height: 250,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  noPhoto: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
   },
   reportId: {
     fontSize: 12,

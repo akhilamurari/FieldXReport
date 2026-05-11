@@ -136,6 +136,7 @@ export default function ReportFormScreen() {
         userId: user.uid,
         latitude: latitude || 0,
         longitude: longitude || 0,
+        photoUrl: photo || '',
       });
 
       // Save to SQLite for offline access
