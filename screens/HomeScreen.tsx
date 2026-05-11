@@ -32,7 +32,9 @@ export default function HomeScreen({ navigation }: any) {
       const state = await Battery.getBatteryStateAsync();
       setBatteryLevel(Math.round(level * 100));
       setBatteryState(
-        state === Battery.BatteryState.CHARGING ? 'Charging' : 'Not Charging'
+        state === Battery.BatteryState.CHARGING
+          ? 'Charging'
+          : 'Not Charging'
       );
     };
     getBattery();
@@ -77,8 +79,11 @@ export default function HomeScreen({ navigation }: any) {
               {
                 width: `${batteryLevel}%` as any,
                 backgroundColor:
-                  batteryLevel < 20 ? '#dc3545' :
-                  batteryLevel < 50 ? '#ffa500' : '#28a745',
+                  batteryLevel < 20
+                    ? '#dc3545'
+                    : batteryLevel < 50
+                    ? '#ffa500'
+                    : '#28a745',
               },
             ]}
           />
@@ -94,13 +99,17 @@ export default function HomeScreen({ navigation }: any) {
       {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
+      {/* New Field Report */}
       <TouchableOpacity
         style={[styles.actionButton, styles.primaryButton]}
         onPress={() => navigation.navigate('NewReport')}
       >
-        <Text style={styles.actionButtonText}>📋 New Field Report</Text>
+        <Text style={styles.actionButtonText}>
+          📋 New Field Report
+        </Text>
       </TouchableOpacity>
 
+      {/* My Reports */}
       <TouchableOpacity
         style={[styles.actionButton, styles.secondaryButton]}
         onPress={() => navigation.navigate('MyReports')}
@@ -108,6 +117,7 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.actionButtonText}>📁 My Reports</Text>
       </TouchableOpacity>
 
+      {/* View Map */}
       <TouchableOpacity
         style={[styles.actionButton, styles.mapButton]}
         onPress={() => navigation.navigate('Map')}
@@ -115,7 +125,15 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.actionButtonText}>🗺️ View Map</Text>
       </TouchableOpacity>
 
-      {/* Logout Button */}
+      {/* Sensors */}
+      <TouchableOpacity
+        style={[styles.actionButton, styles.sensorsButton]}
+        onPress={() => navigation.navigate('Sensors')}
+      >
+        <Text style={styles.actionButtonText}>📡 Sensors</Text>
+      </TouchableOpacity>
+
+      {/* Logout */}
       <TouchableOpacity
         style={[styles.actionButton, styles.logoutButton]}
         onPress={handleLogout}
@@ -216,6 +234,9 @@ const styles = StyleSheet.create({
   },
   mapButton: {
     backgroundColor: '#28a745',
+  },
+  sensorsButton: {
+    backgroundColor: '#6f42c1',
   },
   logoutButton: {
     backgroundColor: '#dc3545',

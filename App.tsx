@@ -25,6 +25,7 @@ import ReportFormScreen from './screens/ReportFormScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import MapScreen from './screens/MapScreen';
 import ReportDetailScreen from './screens/ReportDetailScreen';
+import SensorsScreen from './screens/SensorsScreen';
 
 // Create navigators
 const Stack = createStackNavigator();
@@ -174,6 +175,10 @@ export default function App() {
             <Stack.Screen
               name="ReportDetail"
               component={ReportDetailScreen}
+            />
+            <Stack.Screen
+              name="Sensors"
+              component={SensorsScreen}
             />
           </>
         ) : (
