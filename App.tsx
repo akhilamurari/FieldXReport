@@ -1,6 +1,7 @@
 // App.tsx
 // Main entry point for FieldReportX
-// Sets up navigation, authentication state, SQLite database and notifications
+// Sets up navigation, authentication state, SQLite database,
+// notifications and background tasks
 
 import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -10,7 +11,11 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { ActivityIndicator, View, Text } from 'react-native';
 import { initDatabase } from './services/database';
-import { requestNotificationPermissions, scheduleDailyReminder } from './services/notifications';
+import {
+  requestNotificationPermissions,
+  scheduleDailyReminder,
+} from './services/notifications';
+import { registerBackgroundSync } from './services/backgroundTasks';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -113,6 +118,17 @@ export default function App() {
       }
     };
     setupNotifications();
+
+    // Register background sync task
+    const setupBackgroundSync = async () => {
+      try {
+        await registerBackgroundSync();
+        console.log('Background sync registered successfully');
+      } catch (error) {
+        console.error('Background sync setup error:', error);
+      }
+    };
+    setupBackgroundSync();
 
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
