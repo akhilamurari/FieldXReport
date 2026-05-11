@@ -1,6 +1,6 @@
 // screens/ReportFormScreen.tsx
 // Report form screen for FieldReportX
-// Handles field report creation with GPS and camera
+// Handles field report creation with GPS, camera and notifications
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -17,6 +17,8 @@ import {
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { auth, addReport } from '../services/firebase';
+import { insertReport } from '../services/database';
+import { sendReportSubmittedNotification } from '../services/notifications';
 
 export default function ReportFormScreen() {
   const [title, setTitle] = useState('');
@@ -77,7 +79,10 @@ export default function ReportFormScreen() {
             const { status } =
               await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-              Alert.alert('Permission Denied', 'Camera permission is required');
+              Alert.alert(
+                'Permission Denied',
+                'Camera permission is required'
+              );
               return;
             }
             const result = await ImagePicker.launchCameraAsync({
@@ -108,7 +113,7 @@ export default function ReportFormScreen() {
     );
   };
 
-  // Submit report
+  // Submit report to Firebase and SQLite
   const handleSubmit = async () => {
     if (!title || !notes) {
       Alert.alert('Error', 'Please fill in title and notes');
@@ -121,7 +126,9 @@ export default function ReportFormScreen() {
         Alert.alert('Error', 'You must be logged in');
         return;
       }
-      await addReport({
+
+      // Save to Firebase Firestore
+      const firebaseId = await addReport({
         title,
         notes,
         location,
@@ -130,6 +137,23 @@ export default function ReportFormScreen() {
         latitude: latitude || 0,
         longitude: longitude || 0,
       });
+
+      // Save to SQLite for offline access
+      insertReport({
+        firebaseId,
+        title,
+        notes,
+        location,
+        status: 'submitted',
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        createdAt: new Date().toISOString(),
+        synced: 1,
+      });
+
+      // Send push notification
+      await sendReportSubmittedNotification(title);
+
       Alert.alert(
         'Success',
         'Report submitted successfully!',
@@ -137,6 +161,7 @@ export default function ReportFormScreen() {
           {
             text: 'OK',
             onPress: () => {
+              // Reset form
               setTitle('');
               setNotes('');
               setPhoto(null);
