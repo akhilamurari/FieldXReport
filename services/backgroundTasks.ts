@@ -65,14 +65,26 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
 // Register background fetch task
 export const registerBackgroundSync = async (): Promise<void> => {
   try {
+    // Check if already registered
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(
+      BACKGROUND_SYNC_TASK
+    );
+    if (isRegistered) {
+      console.log('Background sync already registered');
+      return;
+    }
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-      minimumInterval: 15 * 60, // 15 minutes
+      minimumInterval: 15 * 60,
       stopOnTerminate: false,
       startOnBoot: true,
     });
     console.log('Background sync registered successfully');
   } catch (error) {
-    console.error('Background sync registration failed:', error);
+    // Background tasks not supported in Expo Go
+    // Will work in production APK build
+    console.log(
+      'Background sync not available in Expo Go — will work in APK build'
+    );
   }
 };
 
