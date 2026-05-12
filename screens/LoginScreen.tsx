@@ -1,6 +1,6 @@
 // screens/LoginScreen.tsx
 // Login screen for FieldReportX
-// Handles user authentication with Firebase
+// Professional redesign with teal and gold theme
 
 import React, { useState } from 'react';
 import {
@@ -13,6 +13,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import { loginUser } from '../services/firebase';
 
@@ -20,17 +22,16 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    // Validate fields
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Missing Fields', 'Please fill in all fields');
       return;
     }
     try {
       setLoading(true);
       await loginUser(email, password);
-      // Navigation happens automatically via auth state change in App.tsx
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {
@@ -43,52 +44,99 @@ export default function LoginScreen({ navigation }: any) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
-      <Text style={styles.title}>FieldReportX</Text>
-      <Text style={styles.subtitle}>Sign in to your account</Text>
-
-      {/* Email Input */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      {/* Password Input */}
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      {/* Login Button */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
+      <StatusBar barStyle="light-content" backgroundColor="#0d7377" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Sign In</Text>
-        )}
-      </TouchableOpacity>
 
-      {/* Register Link */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Register')}
-      >
-        <Text style={styles.linkText}>
-          Don't have an account? Register here
-        </Text>
-      </TouchableOpacity>
+        {/* Top Header Section */}
+        <View style={styles.heroSection}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoIcon}>📋</Text>
+          </View>
+          <Text style={styles.appName}>FieldReportX</Text>
+          <Text style={styles.tagline}>Report Smarter. Work Safer.</Text>
+        </View>
+
+        {/* Form Section */}
+        <View style={styles.formSection}>
+          <Text style={styles.formTitle}>Welcome Back</Text>
+          <Text style={styles.formSubtitle}>
+            Sign in to continue to your dashboard
+          </Text>
+
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputIcon}>✉️</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              placeholderTextColor="#aaa"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputIcon}>🔒</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#aaa"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Text style={styles.showPassword}>
+                {showPassword ? '🙈' : '👁️'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Login Button */}
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Sign In →</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Register Link */}
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.registerButtonText}>
+              Create New Account
+            </Text>
+          </TouchableOpacity>
+
+          {/* Footer */}
+          <Text style={styles.footer}>
+            FieldReportX — Built for field professionals
+          </Text>
+        </View>
+
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -96,54 +144,140 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 24,
-    justifyContent: 'center',
+    backgroundColor: '#0d7377',
   },
-  title: {
+  scrollContent: {
+    flexGrow: 1,
+  },
+  heroSection: {
+    backgroundColor: '#0d7377',
+    alignItems: 'center',
+    paddingTop: 80,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoIcon: {
+    fontSize: 40,
+  },
+  appName: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a2e',
-    textAlign: 'center',
-    marginBottom: 8,
+    color: '#fff',
+    letterSpacing: 1,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  label: {
+  tagline: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
+  formSection: {
+    flex: 1,
+    backgroundColor: '#fafafa',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 32,
+    paddingTop: 36,
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#14213d',
     marginBottom: 6,
-    marginTop: 12,
+  },
+  formSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 28,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inputIcon: {
+    fontSize: 18,
+    marginRight: 10,
   },
   input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    flex: 1,
     fontSize: 16,
+    color: '#14213d',
+    paddingVertical: 14,
   },
-  button: {
-    backgroundColor: '#1a1a2e',
-    padding: 16,
-    borderRadius: 8,
+  showPassword: {
+    fontSize: 18,
+    padding: 4,
+  },
+  loginButton: {
+    backgroundColor: '#0d7377',
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 8,
+    shadowColor: '#0d7377',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  buttonText: {
+  loginButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-  linkText: {
-    color: '#1a1a2e',
-    textAlign: 'center',
-    marginTop: 16,
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  dividerText: {
+    color: '#aaa',
+    paddingHorizontal: 12,
     fontSize: 14,
+  },
+  registerButton: {
+    borderWidth: 1.5,
+    borderColor: '#0d7377',
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+  },
+  registerButtonText: {
+    color: '#0d7377',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    textAlign: 'center',
+    color: '#ccc',
+    fontSize: 12,
+    marginTop: 32,
   },
 });

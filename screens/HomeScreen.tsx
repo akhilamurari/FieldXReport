@@ -1,6 +1,6 @@
 // screens/HomeScreen.tsx
 // Home screen for FieldReportX
-// Shows welcome message, battery level and quick actions
+// Professional redesign with teal and gold theme
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  StatusBar,
 } from 'react-native';
 import * as Battery from 'expo-battery';
 import { auth, logoutUser } from '../services/firebase';
@@ -18,6 +19,7 @@ export default function HomeScreen({ navigation }: any) {
   const [batteryLevel, setBatteryLevel] = useState<number>(0);
   const [batteryState, setBatteryState] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<string>('');
 
   useEffect(() => {
     // Get current user
@@ -26,6 +28,20 @@ export default function HomeScreen({ navigation }: any) {
       setUserName(user.email || 'Field Worker');
     }
 
+    // Get current time
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleDateString('en-AU', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      );
+    };
+    updateTime();
+
     // Get battery level
     const getBattery = async () => {
       const level = await Battery.getBatteryLevelAsync();
@@ -33,8 +49,8 @@ export default function HomeScreen({ navigation }: any) {
       setBatteryLevel(Math.round(level * 100));
       setBatteryState(
         state === Battery.BatteryState.CHARGING
-          ? 'Charging'
-          : 'Not Charging'
+          ? '⚡ Charging'
+          : '🔋 On Battery'
       );
     };
     getBattery();
@@ -52,207 +68,361 @@ export default function HomeScreen({ navigation }: any) {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logoutUser();
+            } catch (error: any) {
+              Alert.alert('Error', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getBatteryColour = () => {
+    if (batteryLevel < 20) return '#e63946';
+    if (batteryLevel < 50) return '#f4a261';
+    return '#2d6a4f';
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0d7377" />
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>FieldReportX</Text>
-        <Text style={styles.subtitle}>Welcome, {userName}</Text>
-      </View>
-
-      {/* Battery Status Card */}
-      <View style={styles.batteryCard}>
-        <Text style={styles.cardTitle}>Battery Status</Text>
-        <Text style={styles.batteryLevel}>{batteryLevel}%</Text>
-        <View style={styles.batteryBar}>
-          <View
-            style={[
-              styles.batteryFill,
-              {
-                width: `${batteryLevel}%` as any,
-                backgroundColor:
-                  batteryLevel < 20
-                    ? '#dc3545'
-                    : batteryLevel < 50
-                    ? '#ffa500'
-                    : '#28a745',
-              },
-            ]}
-          />
-        </View>
-        <Text style={styles.batteryState}>{batteryState}</Text>
-        {batteryLevel < 20 && (
-          <Text style={styles.batteryWarning}>
-            ⚠️ Low battery — please charge your device
+        <View>
+          <Text style={styles.headerGreeting}>Good day 👋</Text>
+          <Text style={styles.headerName} numberOfLines={1}>
+            {userName}
           </Text>
-        )}
+          <Text style={styles.headerDate}>{currentTime}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutIcon}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutIconText}>🚪</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Quick Actions */}
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
-
-      {/* New Field Report */}
-      <TouchableOpacity
-        style={[styles.actionButton, styles.primaryButton]}
-        onPress={() => navigation.navigate('NewReport')}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.actionButtonText}>
-          📋 New Field Report
-        </Text>
-      </TouchableOpacity>
 
-      {/* My Reports */}
-      <TouchableOpacity
-        style={[styles.actionButton, styles.secondaryButton]}
-        onPress={() => navigation.navigate('MyReports')}
-      >
-        <Text style={styles.actionButtonText}>📁 My Reports</Text>
-      </TouchableOpacity>
+        {/* Battery Status Card */}
+        <View style={styles.batteryCard}>
+          <View style={styles.batteryHeader}>
+            <Text style={styles.batteryTitle}>Device Status</Text>
+            <Text style={styles.batteryStateText}>{batteryState}</Text>
+          </View>
+          <View style={styles.batteryRow}>
+            <Text style={styles.batteryPercentage}>
+              {batteryLevel}%
+            </Text>
+            <View style={styles.batteryBarContainer}>
+              <View
+                style={[
+                  styles.batteryBarFill,
+                  {
+                    width: `${batteryLevel}%` as any,
+                    backgroundColor: getBatteryColour(),
+                  },
+                ]}
+              />
+            </View>
+          </View>
+          {batteryLevel < 20 && (
+            <View style={styles.warningBanner}>
+              <Text style={styles.warningText}>
+                ⚠️ Low battery — charge before heading to field
+              </Text>
+            </View>
+          )}
+        </View>
 
-      {/* View Map */}
-      <TouchableOpacity
-        style={[styles.actionButton, styles.mapButton]}
-        onPress={() => navigation.navigate('Map')}
-      >
-        <Text style={styles.actionButtonText}>🗺️ View Map</Text>
-      </TouchableOpacity>
+        {/* Quick Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>📋</Text>
+            <Text style={styles.statLabel}>Reports</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>📍</Text>
+            <Text style={styles.statLabel}>GPS Active</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>☁️</Text>
+            <Text style={styles.statLabel}>Synced</Text>
+          </View>
+        </View>
 
-      {/* Sensors */}
-      <TouchableOpacity
-        style={[styles.actionButton, styles.sensorsButton]}
-        onPress={() => navigation.navigate('Sensors')}
-      >
-        <Text style={styles.actionButtonText}>📡 Sensors</Text>
-      </TouchableOpacity>
+        {/* Section Title */}
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-      {/* Logout */}
-      <TouchableOpacity
-        style={[styles.actionButton, styles.logoutButton]}
-        onPress={handleLogout}
-      >
-        <Text style={styles.actionButtonText}>🚪 Logout</Text>
-      </TouchableOpacity>
+        {/* Action Grid */}
+        <View style={styles.actionGrid}>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>FieldReportX v1.0.0</Text>
-      </View>
+          {/* New Report */}
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardPrimary]}
+            onPress={() => navigation.navigate('NewReport')}
+          >
+            <Text style={styles.actionCardIcon}>📋</Text>
+            <Text style={styles.actionCardTitle}>New Report</Text>
+            <Text style={styles.actionCardSubtitle}>
+              Submit field report
+            </Text>
+          </TouchableOpacity>
 
-    </ScrollView>
+          {/* My Reports */}
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardSecondary]}
+            onPress={() => navigation.navigate('MyReports')}
+          >
+            <Text style={styles.actionCardIcon}>📁</Text>
+            <Text style={styles.actionCardTitle}>My Reports</Text>
+            <Text style={styles.actionCardSubtitle}>
+              View submitted
+            </Text>
+          </TouchableOpacity>
+
+          {/* Map */}
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardMap]}
+            onPress={() => navigation.navigate('Map')}
+          >
+            <Text style={styles.actionCardIcon}>🗺️</Text>
+            <Text style={styles.actionCardTitle}>View Map</Text>
+            <Text style={styles.actionCardSubtitle}>
+              Report locations
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sensors */}
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardSensors]}
+            onPress={() => navigation.navigate('Sensors')}
+          >
+            <Text style={styles.actionCardIcon}>📡</Text>
+            <Text style={styles.actionCardTitle}>Sensors</Text>
+            <Text style={styles.actionCardSubtitle}>
+              Device motion
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            FieldReportX v1.0.0 — Report Smarter. Work Safer.
+          </Text>
+        </View>
+
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-    paddingTop: 60,
+    backgroundColor: '#fafafa',
   },
   header: {
-    marginBottom: 24,
+    backgroundColor: '#0d7377',
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  title: {
-    fontSize: 28,
+  headerGreeting: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 2,
+  },
+  headerName: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a2e',
+    color: '#fff',
+    maxWidth: 260,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+  headerDate: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
     marginTop: 4,
+  },
+  logoutIcon: {
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutIconText: {
+    fontSize: 20,
+  },
+  scrollView: {
+    flex: 1,
+    padding: 20,
   },
   batteryCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  cardTitle: {
+  batteryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  batteryTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#666',
-    marginBottom: 8,
   },
-  batteryLevel: {
-    fontSize: 36,
+  batteryStateText: {
+    fontSize: 13,
+    color: '#0d7377',
+    fontWeight: '600',
+  },
+  batteryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  batteryPercentage: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a2e',
+    color: '#14213d',
+    width: 70,
   },
-  batteryBar: {
-    height: 8,
+  batteryBarContainer: {
+    flex: 1,
+    height: 10,
     backgroundColor: '#eee',
-    borderRadius: 4,
-    marginTop: 8,
-    marginBottom: 4,
+    borderRadius: 5,
     overflow: 'hidden',
   },
-  batteryFill: {
-    height: 8,
-    borderRadius: 4,
+  batteryBarFill: {
+    height: 10,
+    borderRadius: 5,
   },
-  batteryState: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+  warningBanner: {
+    backgroundColor: '#fff3f3',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#e63946',
   },
-  batteryWarning: {
+  warningText: {
     fontSize: 12,
-    color: '#dc3545',
-    marginTop: 8,
+    color: '#e63946',
     fontWeight: '600',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  statIcon: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#666',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a2e',
-    marginBottom: 12,
+    color: '#14213d',
+    marginBottom: 16,
   },
-  actionButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
   },
-  primaryButton: {
-    backgroundColor: '#1a1a2e',
+  actionCard: {
+    width: '47%',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  secondaryButton: {
-    backgroundColor: '#4a90d9',
+  actionCardPrimary: {
+    backgroundColor: '#0d7377',
   },
-  mapButton: {
-    backgroundColor: '#28a745',
+  actionCardSecondary: {
+    backgroundColor: '#14213d',
   },
-  sensorsButton: {
+  actionCardMap: {
+    backgroundColor: '#2d6a4f',
+  },
+  actionCardSensors: {
     backgroundColor: '#6f42c1',
   },
-  logoutButton: {
-    backgroundColor: '#dc3545',
+  actionCardIcon: {
+    fontSize: 32,
+    marginBottom: 10,
   },
-  actionButtonText: {
-    color: '#fff',
+  actionCardTitle: {
+    fontSize: 15,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  actionCardSubtitle: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
   },
   footer: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    paddingBottom: 20,
   },
   footerText: {
-    color: '#999',
-    fontSize: 12,
+    fontSize: 11,
+    color: '#ccc',
   },
 });
