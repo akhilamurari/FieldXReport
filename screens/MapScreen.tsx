@@ -1,6 +1,6 @@
 // screens/MapScreen.tsx
 // Map screen for FieldReportX
-// Shows all submitted reports as markers on a map
+// Professional redesign with teal and gold theme
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -22,7 +23,9 @@ export default function MapScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(
+    null
+  );
 
   useEffect(() => {
     getLocationAndReports();
@@ -30,7 +33,6 @@ export default function MapScreen() {
 
   const getLocationAndReports = async () => {
     try {
-      // Get current location
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({});
@@ -39,12 +41,9 @@ export default function MapScreen() {
           longitude: location.coords.longitude,
         });
       }
-
-      // Get reports from Firestore
       const user = auth.currentUser;
       if (user) {
         const userReports = await getUserReports(user.uid);
-        // Filter reports that have GPS coordinates
         const reportsWithLocation = userReports.filter(
           (r) => r.latitude && r.longitude
         );
@@ -60,7 +59,7 @@ export default function MapScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1a1a2e" />
+        <ActivityIndicator size="large" color="#0d7377" />
         <Text style={styles.loadingText}>Loading map...</Text>
       </View>
     );
@@ -68,13 +67,22 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0d7377" />
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Report Map</Text>
-        <Text style={styles.headerSubtitle}>
-          {reports.length} report{reports.length !== 1 ? 's' : ''} on map
-        </Text>
+        <View>
+          <Text style={styles.headerTitle}>Report Map</Text>
+          <Text style={styles.headerSubtitle}>
+            {reports.length} report{reports.length !== 1 ? 's' : ''} plotted
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={getLocationAndReports}
+        >
+          <Text style={styles.refreshButtonText}>🔄</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Map */}
@@ -99,7 +107,7 @@ export default function MapScreen() {
             }}
             title={report.title}
             description={report.location}
-            pinColor="#1a1a2e"
+            pinColor="#0d7377"
             onPress={() => setSelectedReport(report)}
           />
         ))}
@@ -109,9 +117,9 @@ export default function MapScreen() {
           <Circle
             center={currentLocation}
             radius={100}
-            fillColor="rgba(26, 26, 46, 0.1)"
-            strokeColor="rgba(26, 26, 46, 0.3)"
-            strokeWidth={1}
+            fillColor="rgba(13, 115, 119, 0.1)"
+            strokeColor="rgba(13, 115, 119, 0.3)"
+            strokeWidth={2}
           />
         )}
       </MapView>
@@ -119,29 +127,39 @@ export default function MapScreen() {
       {/* Selected Report Card */}
       {selectedReport && (
         <View style={styles.reportCard}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setSelectedReport(null)}
-          >
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.reportTitle}>{selectedReport.title}</Text>
-          <Text style={styles.reportDetail}>
-            📍 {selectedReport.location}
+          <View style={styles.reportCardHeader}>
+            <View style={styles.reportCardBadge}>
+              <Text style={styles.reportCardBadgeText}>
+                ✅ Submitted
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedReport(null)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.reportCardTitle}>
+            {selectedReport.title}
           </Text>
-          <Text style={styles.reportDetail} numberOfLines={2}>
-            📝 {selectedReport.notes}
-          </Text>
+          <View style={styles.reportCardDetail}>
+            <Text style={styles.reportCardIcon}>📍</Text>
+            <Text style={styles.reportCardText}>
+              {selectedReport.location}
+            </Text>
+          </View>
+          <View style={styles.reportCardDetail}>
+            <Text style={styles.reportCardIcon}>📝</Text>
+            <Text
+              style={styles.reportCardText}
+              numberOfLines={2}
+            >
+              {selectedReport.notes}
+            </Text>
+          </View>
         </View>
       )}
-
-      {/* Refresh Button */}
-      <TouchableOpacity
-        style={styles.refreshButton}
-        onPress={getLocationAndReports}
-      >
-        <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
-      </TouchableOpacity>
 
     </View>
   );
@@ -150,13 +168,13 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafafa',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafafa',
   },
   loadingText: {
     marginTop: 12,
@@ -164,9 +182,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   header: {
-    backgroundColor: '#1a1a2e',
-    padding: 20,
+    backgroundColor: '#0d7377',
     paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 24,
@@ -174,61 +196,89 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#aaa',
-    marginTop: 4,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  refreshButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    fontSize: 20,
   },
   map: {
     flex: 1,
   },
   reportCard: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 24,
     left: 20,
     right: 20,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 12,
+    elevation: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0d7377',
+  },
+  reportCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  reportCardBadge: {
+    backgroundColor: '#e8f5ee',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  reportCardBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2d6a4f',
   },
   closeButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    padding: 4,
+    width: 28,
+    height: 28,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  reportTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
-    marginBottom: 8,
-    marginRight: 24,
-  },
-  reportDetail: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 4,
-  },
-  refreshButton: {
-    position: 'absolute',
-    bottom: 20,
-    alignSelf: 'center',
-    backgroundColor: '#1a1a2e',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
     fontSize: 14,
+    color: '#666',
+  },
+  reportCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#14213d',
+    marginBottom: 10,
+  },
+  reportCardDetail: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 6,
+  },
+  reportCardIcon: {
+    fontSize: 14,
+    width: 20,
+  },
+  reportCardText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
   },
 });

@@ -1,6 +1,6 @@
 // screens/ReportFormScreen.tsx
 // Report form screen for FieldReportX
-// Handles field report creation with GPS, camera and notifications
+// Professional redesign with teal and gold theme
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -13,6 +13,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  StatusBar,
 } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,7 +35,6 @@ export default function ReportFormScreen() {
     getLocation();
   }, []);
 
-  // Get current GPS location
   const getLocation = async () => {
     try {
       setLocationLoading(true);
@@ -47,8 +47,6 @@ export default function ReportFormScreen() {
       const { latitude, longitude } = currentLocation.coords;
       setLatitude(latitude);
       setLongitude(longitude);
-
-      // Get human readable address
       const address = await Location.reverseGeocodeAsync({
         latitude,
         longitude,
@@ -67,7 +65,6 @@ export default function ReportFormScreen() {
     }
   };
 
-  // Take photo or pick from gallery
   const handlePhoto = async () => {
     Alert.alert(
       'Add Photo',
@@ -79,10 +76,7 @@ export default function ReportFormScreen() {
             const { status } =
               await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-              Alert.alert(
-                'Permission Denied',
-                'Camera permission is required'
-              );
+              Alert.alert('Permission Denied', 'Camera permission is required');
               return;
             }
             const result = await ImagePicker.launchCameraAsync({
@@ -113,10 +107,9 @@ export default function ReportFormScreen() {
     );
   };
 
-  // Submit report to Firebase and SQLite
   const handleSubmit = async () => {
     if (!title || !notes) {
-      Alert.alert('Error', 'Please fill in title and notes');
+      Alert.alert('Missing Fields', 'Please fill in title and notes');
       return;
     }
     try {
@@ -126,8 +119,6 @@ export default function ReportFormScreen() {
         Alert.alert('Error', 'You must be logged in');
         return;
       }
-
-      // Save to Firebase Firestore
       const firebaseId = await addReport({
         title,
         notes,
@@ -138,8 +129,6 @@ export default function ReportFormScreen() {
         longitude: longitude || 0,
         photoUrl: photo || '',
       });
-
-      // Save to SQLite for offline access
       insertReport({
         firebaseId,
         title,
@@ -151,18 +140,14 @@ export default function ReportFormScreen() {
         createdAt: new Date().toISOString(),
         synced: 1,
       });
-
-      // Send push notification
       await sendReportSubmittedNotification(title);
-
       Alert.alert(
-        'Success',
-        'Report submitted successfully!',
+        '✅ Report Submitted',
+        'Your field report has been submitted successfully.',
         [
           {
             text: 'OK',
             onPress: () => {
-              // Reset form
               setTitle('');
               setNotes('');
               setPhoto(null);
@@ -179,188 +164,285 @@ export default function ReportFormScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0d7377" />
 
       {/* Header */}
-      <Text style={styles.header}>New Field Report</Text>
-
-      {/* Report Title */}
-      <Text style={styles.label}>Report Title *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter report title"
-        value={title}
-        onChangeText={setTitle}
-      />
-
-      {/* Location */}
-      <Text style={styles.label}>Location</Text>
-      <View style={styles.locationRow}>
-        <TextInput
-          style={[styles.input, styles.locationInput]}
-          placeholder="Fetching location..."
-          value={location}
-          onChangeText={setLocation}
-        />
-        <TouchableOpacity
-          style={styles.locationButton}
-          onPress={getLocation}
-        >
-          {locationLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.locationButtonText}>📍</Text>
-          )}
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>New Field Report</Text>
+        <Text style={styles.headerSubtitle}>
+          Fill in the details below
+        </Text>
       </View>
 
-      {/* GPS Coordinates */}
-      {latitude && longitude && (
-        <Text style={styles.coordinates}>
-          GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-        </Text>
-      )}
-
-      {/* Notes */}
-      <Text style={styles.label}>Notes *</Text>
-      <TextInput
-        style={styles.inputMultiline}
-        placeholder="Enter inspection notes"
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-        numberOfLines={4}
-      />
-
-      {/* Photo */}
-      <Text style={styles.label}>Photo</Text>
-      <TouchableOpacity
-        style={styles.photoButton}
-        onPress={handlePhoto}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.photoButtonText}>
-          {photo ? '📷 Change Photo' : '📷 Add Photo'}
-        </Text>
-      </TouchableOpacity>
 
-      {/* Photo Preview */}
-      {photo && (
-        <Image
-          source={{ uri: photo }}
-          style={styles.photoPreview}
-        />
-      )}
+        {/* Report Title */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>📋 Report Title *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter report title"
+            placeholderTextColor="#aaa"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitButtonText}>Submit Report</Text>
-        )}
-      </TouchableOpacity>
+        {/* Location */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>📍 Location</Text>
+          <View style={styles.locationRow}>
+            <TextInput
+              style={[styles.input, styles.locationInput]}
+              placeholder="Fetching location..."
+              placeholderTextColor="#aaa"
+              value={location}
+              onChangeText={setLocation}
+            />
+            <TouchableOpacity
+              style={styles.locationButton}
+              onPress={getLocation}
+            >
+              {locationLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.locationButtonText}>📍</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          {latitude && longitude && (
+            <View style={styles.gpsTag}>
+              <Text style={styles.gpsText}>
+                🛰️ GPS: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+              </Text>
+            </View>
+          )}
+        </View>
 
-      <View style={styles.footer} />
+        {/* Notes */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>📝 Notes *</Text>
+          <TextInput
+            style={styles.inputMultiline}
+            placeholder="Enter inspection notes..."
+            placeholderTextColor="#aaa"
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={5}
+          />
+        </View>
 
-    </ScrollView>
+        {/* Photo */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>📷 Photo</Text>
+          {photo ? (
+            <View style={styles.photoContainer}>
+              <Image
+                source={{ uri: photo }}
+                style={styles.photoPreview}
+              />
+              <TouchableOpacity
+                style={styles.changePhotoButton}
+                onPress={handlePhoto}
+              >
+                <Text style={styles.changePhotoText}>
+                  Change Photo
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.photoButton}
+              onPress={handlePhoto}
+            >
+              <Text style={styles.photoButtonIcon}>📷</Text>
+              <Text style={styles.photoButtonText}>Add Photo</Text>
+              <Text style={styles.photoButtonSubtext}>
+                Take photo or choose from gallery
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              Submit Report →
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.footer} />
+
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-    paddingTop: 60,
+    backgroundColor: '#fafafa',
   },
   header: {
+    backgroundColor: '#0d7377',
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a2e',
-    marginBottom: 24,
+    color: '#fff',
   },
-  label: {
+  headerSubtitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 6,
-    marginTop: 12,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 4,
+  },
+  scrollView: {
+    flex: 1,
+    padding: 20,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#14213d',
+    marginBottom: 8,
   },
   input: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
+    color: '#14213d',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputMultiline: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
-    height: 120,
+    color: '#14213d',
+    height: 140,
     textAlignVertical: 'top',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   locationRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
   locationInput: {
     flex: 1,
   },
   locationButton: {
-    backgroundColor: '#1a1a2e',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: '#0d7377',
+    width: 50,
+    height: 50,
+    borderRadius: 12,
     justifyContent: 'center',
-    width: 48,
-    height: 48,
+    alignItems: 'center',
   },
   locationButtonText: {
-    fontSize: 20,
+    fontSize: 22,
   },
-  coordinates: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 4,
+  gpsTag: {
+    backgroundColor: '#e8f5f5',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 8,
+  },
+  gpsText: {
+    fontSize: 12,
+    color: '#0d7377',
+    fontWeight: '600',
   },
   photoButton: {
-    backgroundColor: '#4a90d9',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 24,
     alignItems: 'center',
   },
+  photoButtonIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
   photoButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: '600',
+    color: '#14213d',
+    marginBottom: 4,
+  },
+  photoButtonSubtext: {
+    fontSize: 12,
+    color: '#aaa',
+  },
+  photoContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   photoPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: 12,
+    height: 220,
+    borderRadius: 12,
+  },
+  changePhotoButton: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    alignItems: 'center',
+    marginTop: -40,
+  },
+  changePhotoText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   submitButton: {
-    backgroundColor: '#1a1a2e',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#0d7377',
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    marginTop: 24,
+    shadowColor: '#0d7377',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   submitButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   footer: {
     height: 40,
