@@ -1,6 +1,6 @@
 // screens/SensorsScreen.tsx
 // Sensors screen for FieldReportX
-// Displays real-time accelerometer data and device movement detection
+// Professional redesign with teal and gold theme
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 
@@ -23,35 +24,35 @@ export default function SensorsScreen({ navigation }: any) {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [movementStatus, setMovementStatus] = useState('Stationary');
   const [shakeCount, setShakeCount] = useState(0);
+  const [magnitude, setMagnitude] = useState(0);
 
   useEffect(() => {
     return () => {
-      // Clean up subscription when screen unmounts
       if (subscription) {
         subscription.remove();
       }
     };
   }, [subscription]);
 
-  // Detect movement based on acceleration values
   const detectMovement = (x: number, y: number, z: number) => {
-    const magnitude = Math.sqrt(x * x + y * y + z * z);
+    const mag = Math.sqrt(x * x + y * y + z * z);
+    setMagnitude(mag);
 
-    if (magnitude > 2.5) {
-      setMovementStatus('🚨 Shake Detected!');
+    if (mag > 2.5) {
+      setMovementStatus('Shake Detected!');
       setShakeCount((prev) => prev + 1);
       Alert.alert(
-        'Shake Detected!',
-        'Device shake detected during inspection.'
+        '⚠️ Shake Detected',
+        'Unusual device movement detected during inspection.',
+        [{ text: 'OK' }]
       );
-    } else if (magnitude > 1.5) {
-      setMovementStatus('🏃 Moving');
+    } else if (mag > 1.5) {
+      setMovementStatus('Moving');
     } else {
-      setMovementStatus('✅ Stationary');
+      setMovementStatus('Stationary');
     }
   };
 
-  // Start accelerometer monitoring
   const startMonitoring = () => {
     Accelerometer.setUpdateInterval(500);
     const sub = Accelerometer.addListener((data) => {
@@ -62,7 +63,6 @@ export default function SensorsScreen({ navigation }: any) {
     setIsMonitoring(true);
   };
 
-  // Stop accelerometer monitoring
   const stopMonitoring = () => {
     if (subscription) {
       subscription.remove();
@@ -70,17 +70,24 @@ export default function SensorsScreen({ navigation }: any) {
     }
     setIsMonitoring(false);
     setMovementStatus('Stationary');
+    setMagnitude(0);
   };
 
-  // Get colour based on movement status
   const getStatusColour = () => {
-    if (movementStatus.includes('Shake')) return '#dc3545';
-    if (movementStatus.includes('Moving')) return '#ffa500';
-    return '#28a745';
+    if (movementStatus.includes('Shake')) return '#e63946';
+    if (movementStatus.includes('Moving')) return '#f4a261';
+    return '#2d6a4f';
+  };
+
+  const getStatusIcon = () => {
+    if (movementStatus.includes('Shake')) return '🚨';
+    if (movementStatus.includes('Moving')) return '🏃';
+    return '✅';
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0d7377" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -91,259 +98,421 @@ export default function SensorsScreen({ navigation }: any) {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Sensors</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Movement Status Card */}
-      <View
-        style={[
-          styles.statusCard,
-          { borderLeftColor: getStatusColour() },
-        ]}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.statusLabel}>Movement Status</Text>
-        <Text
+
+        {/* Movement Status Card */}
+        <View
           style={[
-            styles.statusValue,
-            { color: getStatusColour() },
+            styles.statusCard,
+            { borderLeftColor: getStatusColour() },
           ]}
         >
-          {movementStatus}
-        </Text>
-        <Text style={styles.shakeCount}>
-          Shakes detected: {shakeCount}
-        </Text>
-      </View>
-
-      {/* Accelerometer Data Card */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>📱 Accelerometer Data</Text>
-        <Text style={styles.cardSubtitle}>
-          Real-time X, Y, Z acceleration values
-        </Text>
-
-        {/* X Axis */}
-        <View style={styles.axisRow}>
-          <Text style={styles.axisLabel}>X Axis</Text>
-          <View style={styles.axisBarContainer}>
+          <View style={styles.statusHeader}>
+            <Text style={styles.statusLabel}>Movement Status</Text>
             <View
               style={[
-                styles.axisBar,
+                styles.statusDot,
                 {
-                  width: `${Math.min(
-                    Math.abs(accelerometerData.x) * 50,
-                    100
-                  )}%`,
-                  backgroundColor: '#4a90d9',
+                  backgroundColor: isMonitoring
+                    ? '#2d6a4f'
+                    : '#ccc',
                 },
               ]}
             />
           </View>
-          <Text style={styles.axisValue}>
-            {accelerometerData.x.toFixed(3)}
-          </Text>
-        </View>
-
-        {/* Y Axis */}
-        <View style={styles.axisRow}>
-          <Text style={styles.axisLabel}>Y Axis</Text>
-          <View style={styles.axisBarContainer}>
-            <View
+          <View style={styles.statusRow}>
+            <Text style={styles.statusIcon}>
+              {getStatusIcon()}
+            </Text>
+            <Text
               style={[
-                styles.axisBar,
-                {
-                  width: `${Math.min(
-                    Math.abs(accelerometerData.y) * 50,
-                    100
-                  )}%`,
-                  backgroundColor: '#28a745',
-                },
+                styles.statusValue,
+                { color: getStatusColour() },
               ]}
-            />
+            >
+              {movementStatus}
+            </Text>
           </View>
-          <Text style={styles.axisValue}>
-            {accelerometerData.y.toFixed(3)}
+          <View style={styles.statusDetails}>
+            <View style={styles.statusDetailItem}>
+              <Text style={styles.statusDetailLabel}>
+                Magnitude
+              </Text>
+              <Text style={styles.statusDetailValue}>
+                {magnitude.toFixed(3)}
+              </Text>
+            </View>
+            <View style={styles.statusDetailDivider} />
+            <View style={styles.statusDetailItem}>
+              <Text style={styles.statusDetailLabel}>
+                Shakes
+              </Text>
+              <Text style={styles.statusDetailValue}>
+                {shakeCount}
+              </Text>
+            </View>
+            <View style={styles.statusDetailDivider} />
+            <View style={styles.statusDetailItem}>
+              <Text style={styles.statusDetailLabel}>
+                Status
+              </Text>
+              <Text style={styles.statusDetailValue}>
+                {isMonitoring ? '🟢 Live' : '⚫ Off'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Accelerometer Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📱 Accelerometer</Text>
+          <Text style={styles.cardSubtitle}>
+            Real-time X, Y, Z acceleration values (g-force)
+          </Text>
+
+          {/* X Axis */}
+          <View style={styles.axisContainer}>
+            <View style={styles.axisHeader}>
+              <View
+                style={[
+                  styles.axisLabel,
+                  { backgroundColor: '#e8f0fe' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.axisLabelText,
+                    { color: '#4a90d9' },
+                  ]}
+                >
+                  X
+                </Text>
+              </View>
+              <Text style={styles.axisValue}>
+                {accelerometerData.x.toFixed(4)} g
+              </Text>
+            </View>
+            <View style={styles.axisBarBg}>
+              <View
+                style={[
+                  styles.axisBarFill,
+                  {
+                    width: `${Math.min(
+                      Math.abs(accelerometerData.x) * 50,
+                      100
+                    )}%`,
+                    backgroundColor: '#4a90d9',
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          {/* Y Axis */}
+          <View style={styles.axisContainer}>
+            <View style={styles.axisHeader}>
+              <View
+                style={[
+                  styles.axisLabel,
+                  { backgroundColor: '#e8f5ee' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.axisLabelText,
+                    { color: '#2d6a4f' },
+                  ]}
+                >
+                  Y
+                </Text>
+              </View>
+              <Text style={styles.axisValue}>
+                {accelerometerData.y.toFixed(4)} g
+              </Text>
+            </View>
+            <View style={styles.axisBarBg}>
+              <View
+                style={[
+                  styles.axisBarFill,
+                  {
+                    width: `${Math.min(
+                      Math.abs(accelerometerData.y) * 50,
+                      100
+                    )}%`,
+                    backgroundColor: '#2d6a4f',
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          {/* Z Axis */}
+          <View style={styles.axisContainer}>
+            <View style={styles.axisHeader}>
+              <View
+                style={[
+                  styles.axisLabel,
+                  { backgroundColor: '#fff3e0' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.axisLabelText,
+                    { color: '#f4a261' },
+                  ]}
+                >
+                  Z
+                </Text>
+              </View>
+              <Text style={styles.axisValue}>
+                {accelerometerData.z.toFixed(4)} g
+              </Text>
+            </View>
+            <View style={styles.axisBarBg}>
+              <View
+                style={[
+                  styles.axisBarFill,
+                  {
+                    width: `${Math.min(
+                      Math.abs(accelerometerData.z) * 50,
+                      100
+                    )}%`,
+                    backgroundColor: '#f4a261',
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>
+            ℹ️ How FieldReportX Uses Sensors
+          </Text>
+          <Text style={styles.infoText}>
+            The accelerometer detects device movement during field
+            inspections. FieldReportX uses this to identify if a
+            field worker is stationary or moving, and alerts when
+            unusual device movement occurs that could indicate a
+            dropped device or safety incident.
           </Text>
         </View>
 
-        {/* Z Axis */}
-        <View style={styles.axisRow}>
-          <Text style={styles.axisLabel}>Z Axis</Text>
-          <View style={styles.axisBarContainer}>
-            <View
-              style={[
-                styles.axisBar,
-                {
-                  width: `${Math.min(
-                    Math.abs(accelerometerData.z) * 50,
-                    100
-                  )}%`,
-                  backgroundColor: '#ffa500',
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.axisValue}>
-            {accelerometerData.z.toFixed(3)}
+        {/* Start/Stop Button */}
+        <TouchableOpacity
+          style={[
+            styles.mainButton,
+            isMonitoring
+              ? styles.stopButton
+              : styles.startButton,
+          ]}
+          onPress={isMonitoring ? stopMonitoring : startMonitoring}
+        >
+          <Text style={styles.mainButtonText}>
+            {isMonitoring
+              ? '⏹ Stop Monitoring'
+              : '▶️ Start Monitoring'}
           </Text>
-        </View>
-      </View>
+        </TouchableOpacity>
 
-      {/* Info Card */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>ℹ️ How It Works</Text>
-        <Text style={styles.infoText}>
-          The accelerometer measures device movement in three axes.
-          In FieldReportX this is used to detect if a field worker
-          is stationary or moving during an inspection, and to
-          alert when unusual device movement occurs.
-        </Text>
-      </View>
+        {/* Reset Button */}
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() => {
+            setShakeCount(0);
+            setMagnitude(0);
+          }}
+        >
+          <Text style={styles.resetButtonText}>
+            Reset Counters
+          </Text>
+        </TouchableOpacity>
 
-      {/* Start/Stop Button */}
-      <TouchableOpacity
-        style={[
-          styles.button,
-          isMonitoring ? styles.stopButton : styles.startButton,
-        ]}
-        onPress={isMonitoring ? stopMonitoring : startMonitoring}
-      >
-        <Text style={styles.buttonText}>
-          {isMonitoring
-            ? '⏹ Stop Monitoring'
-            : '▶️ Start Monitoring'}
-        </Text>
-      </TouchableOpacity>
+        <View style={styles.footer} />
 
-      {/* Reset Button */}
-      <TouchableOpacity
-        style={styles.resetButton}
-        onPress={() => setShakeCount(0)}
-      >
-        <Text style={styles.resetButtonText}>Reset Shake Count</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer} />
-
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafafa',
   },
   header: {
-    backgroundColor: '#1a1a2e',
-    padding: 20,
+    backgroundColor: '#0d7377',
     paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backButton: {
-    marginRight: 16,
+    padding: 4,
   },
   backButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },
+  headerSpacer: {
+    width: 50,
+  },
+  scrollView: {
+    flex: 1,
+    padding: 20,
+  },
   statusCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    margin: 20,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statusLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#999',
     textTransform: 'uppercase',
-    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statusIcon: {
+    fontSize: 32,
   },
   statusValue: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  statusDetails: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 12,
+  },
+  statusDetailItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statusDetailLabel: {
+    fontSize: 11,
+    color: '#999',
     marginBottom: 4,
   },
-  shakeCount: {
-    fontSize: 13,
-    color: '#666',
+  statusDetailValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#14213d',
+  },
+  statusDetailDivider: {
+    width: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 4,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 20,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 3,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1a1a2e',
+    color: '#14213d',
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 12,
     color: '#999',
+    marginBottom: 20,
+  },
+  axisContainer: {
     marginBottom: 16,
   },
-  axisRow: {
+  axisHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   axisLabel: {
-    width: 50,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  axisBarContainer: {
-    flex: 1,
-    height: 12,
-    backgroundColor: '#eee',
-    borderRadius: 6,
-    marginHorizontal: 8,
-    overflow: 'hidden',
-  },
-  axisBar: {
-    height: 12,
-    borderRadius: 6,
+  axisLabelText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   axisValue: {
-    width: 55,
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'right',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#14213d',
+  },
+  axisBarBg: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  axisBarFill: {
+    height: 8,
+    borderRadius: 4,
   },
   infoCard: {
-    backgroundColor: '#e8f4fd',
-    borderRadius: 12,
+    backgroundColor: '#e8f5f5',
+    borderRadius: 16,
     padding: 16,
-    marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0d7377',
   },
   infoTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#1a1a2e',
+    color: '#0d7377',
     marginBottom: 8,
   },
   infoText: {
@@ -351,35 +520,42 @@ const styles = StyleSheet.create({
     color: '#555',
     lineHeight: 20,
   },
-  button: {
-    margin: 20,
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 8,
+  mainButton: {
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
+    marginBottom: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   startButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#0d7377',
+    shadowColor: '#0d7377',
   },
   stopButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: '#e63946',
+    shadowColor: '#e63946',
   },
-  buttonText: {
+  mainButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   resetButton: {
-    marginHorizontal: 20,
+    borderWidth: 1.5,
+    borderColor: '#ddd',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#666',
+    marginBottom: 12,
   },
   resetButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    color: '#666',
+    fontSize: 15,
+    fontWeight: '600',
   },
   footer: {
     height: 40,
