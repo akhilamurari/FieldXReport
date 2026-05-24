@@ -2,7 +2,8 @@
 // Sensors screen for FieldReportX
 // Professional redesign with teal and gold theme
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,16 +16,14 @@ import {
 import { Accelerometer } from 'expo-sensors';
 
 export default function SensorsScreen({ navigation }: any) {
-  const [accelerometerData, setAccelerometerData] = useState({
-    x: 0,
-    y: 0,
-    z: 0,
-  });
+  const [x, setX] = useState<number>(0);
+  const [y, setY] = useState<number>(0);
+  const [z, setZ] = useState<number>(0);
   const [subscription, setSubscription] = useState<any>(null);
-  const [isMonitoring, setIsMonitoring] = useState(false);
-  const [movementStatus, setMovementStatus] = useState('Stationary');
-  const [shakeCount, setShakeCount] = useState(0);
-  const [magnitude, setMagnitude] = useState(0);
+  const [isMonitoring, setIsMonitoring] = useState<boolean>(false);
+  const [movementStatus, setMovementStatus] = useState<string>('Stationary');
+  const [shakeCount, setShakeCount] = useState<number>(0);
+  const [magnitude, setMagnitude] = useState<number>(0);
 
   useEffect(() => {
     return () => {
@@ -34,9 +33,13 @@ export default function SensorsScreen({ navigation }: any) {
     };
   }, [subscription]);
 
-  const detectMovement = (x: number, y: number, z: number) => {
-    const mag = Math.sqrt(x * x + y * y + z * z);
-    setMagnitude(mag);
+  const detectMovement = (
+    xVal: number,
+    yVal: number,
+    zVal: number
+  ) => {
+    const mag = Math.sqrt(xVal * xVal + yVal * yVal + zVal * zVal);
+    setMagnitude(parseFloat(mag.toFixed(3)));
 
     if (mag > 2.5) {
       setMovementStatus('Shake Detected!');
@@ -56,7 +59,9 @@ export default function SensorsScreen({ navigation }: any) {
   const startMonitoring = () => {
     Accelerometer.setUpdateInterval(500);
     const sub = Accelerometer.addListener((data) => {
-      setAccelerometerData(data);
+      setX(parseFloat(data.x.toFixed(4)));
+      setY(parseFloat(data.y.toFixed(4)));
+      setZ(parseFloat(data.z.toFixed(4)));
       detectMovement(data.x, data.y, data.z);
     });
     setSubscription(sub);
@@ -73,16 +78,21 @@ export default function SensorsScreen({ navigation }: any) {
     setMagnitude(0);
   };
 
-  const getStatusColour = () => {
+  const getStatusColour = (): string => {
     if (movementStatus.includes('Shake')) return '#e63946';
     if (movementStatus.includes('Moving')) return '#f4a261';
     return '#2d6a4f';
   };
 
-  const getStatusIcon = () => {
+  const getStatusIcon = (): string => {
     if (movementStatus.includes('Shake')) return '🚨';
     if (movementStatus.includes('Moving')) return '🏃';
     return '✅';
+  };
+
+  const getBarWidth = (value: number): string => {
+    const percent = Math.min(Math.abs(value) * 50, 100);
+    return percent.toString() + '%';
   };
 
   return (
@@ -145,7 +155,7 @@ export default function SensorsScreen({ navigation }: any) {
                 Magnitude
               </Text>
               <Text style={styles.statusDetailValue}>
-                {magnitude.toFixed(3)}
+                {magnitude}
               </Text>
             </View>
             <View style={styles.statusDetailDivider} />
@@ -195,7 +205,7 @@ export default function SensorsScreen({ navigation }: any) {
                 </Text>
               </View>
               <Text style={styles.axisValue}>
-                {accelerometerData.x.toFixed(4)} g
+                {x} g
               </Text>
             </View>
             <View style={styles.axisBarBg}>
@@ -203,10 +213,7 @@ export default function SensorsScreen({ navigation }: any) {
                 style={[
                   styles.axisBarFill,
                   {
-                    width: `${Math.min(
-                      Math.abs(accelerometerData.x) * 50,
-                      100
-                    )}%`,
+                    width: getBarWidth(x) as any,
                     backgroundColor: '#4a90d9',
                   },
                 ]}
@@ -233,7 +240,7 @@ export default function SensorsScreen({ navigation }: any) {
                 </Text>
               </View>
               <Text style={styles.axisValue}>
-                {accelerometerData.y.toFixed(4)} g
+                {y} g
               </Text>
             </View>
             <View style={styles.axisBarBg}>
@@ -241,10 +248,7 @@ export default function SensorsScreen({ navigation }: any) {
                 style={[
                   styles.axisBarFill,
                   {
-                    width: `${Math.min(
-                      Math.abs(accelerometerData.y) * 50,
-                      100
-                    )}%`,
+                    width: getBarWidth(y) as any,
                     backgroundColor: '#2d6a4f',
                   },
                 ]}
@@ -271,7 +275,7 @@ export default function SensorsScreen({ navigation }: any) {
                 </Text>
               </View>
               <Text style={styles.axisValue}>
-                {accelerometerData.z.toFixed(4)} g
+                {z} g
               </Text>
             </View>
             <View style={styles.axisBarBg}>
@@ -279,10 +283,7 @@ export default function SensorsScreen({ navigation }: any) {
                 style={[
                   styles.axisBarFill,
                   {
-                    width: `${Math.min(
-                      Math.abs(accelerometerData.z) * 50,
-                      100
-                    )}%`,
+                    width: getBarWidth(z) as any,
                     backgroundColor: '#f4a261',
                   },
                 ]}

@@ -139,7 +139,7 @@ export default function HomeScreen({ navigation }: any) {
                 style={[
                   styles.batteryBarFill,
                   {
-                    width: `${batteryLevel}%` as any,
+                    width: (batteryLevel + '%') as any,
                     backgroundColor: getBatteryColour(),
                   },
                 ]}
@@ -214,6 +214,7 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
 
           {/* Sensors */}
+{/* Sensors */}
           <TouchableOpacity
             style={[styles.actionCard, styles.actionCardSensors]}
             onPress={() => navigation.navigate('Sensors')}
@@ -222,6 +223,18 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.actionCardTitle}>Sensors</Text>
             <Text style={styles.actionCardSubtitle}>
               Device motion
+            </Text>
+          </TouchableOpacity>
+
+          {/* AI Assistant */}
+          <TouchableOpacity
+            style={[styles.actionCard, styles.actionCardAI]}
+            onPress={() => navigation.navigate('AIAssistant')}
+          >
+            <Text style={styles.actionCardIcon}>🤖</Text>
+            <Text style={styles.actionCardTitle}>AI Assistant</Text>
+            <Text style={styles.actionCardSubtitle}>
+              Improve notes with AI
             </Text>
           </TouchableOpacity>
 
@@ -410,6 +423,9 @@ const styles = StyleSheet.create({
   },
   actionCardSensors: {
     backgroundColor: '#6f42c1',
+  },
+  actionCardAI: {
+    backgroundColor: '#e63946',
   },
   actionCardIcon: {
     fontSize: 32,

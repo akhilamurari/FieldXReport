@@ -10,6 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { ActivityIndicator, View, Text } from 'react-native';
+import AIAssistantScreen from './screens/AIAssistantScreen';
 import { initDatabase } from './services/database';
 import {
   requestNotificationPermissions,
@@ -179,6 +180,10 @@ export default function App() {
             <Stack.Screen
               name="Sensors"
               component={SensorsScreen}
+            />
+            <Stack.Screen
+              name="AIAssistant"
+              component={AIAssistantScreen}
             />
           </>
         ) : (
