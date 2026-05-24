@@ -1,6 +1,7 @@
 // screens/HomeScreen.tsx
 // Home screen for FieldReportX
 // Professional redesign with teal and gold theme
+// Includes AdMob banner advertisement
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
 } from 'react-native';
 import * as Battery from 'expo-battery';
 import { auth, logoutUser } from '../services/firebase';
+import AdBanner from '../components/AdBanner';
 
 export default function HomeScreen({ navigation }: any) {
   const [batteryLevel, setBatteryLevel] = useState<number>(0);
@@ -28,7 +30,7 @@ export default function HomeScreen({ navigation }: any) {
       setUserName(user.email || 'Field Worker');
     }
 
-    // Get current time
+    // Get current date
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(
@@ -124,7 +126,9 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.batteryCard}>
           <View style={styles.batteryHeader}>
             <Text style={styles.batteryTitle}>Device Status</Text>
-            <Text style={styles.batteryStateText}>{batteryState}</Text>
+            <Text style={styles.batteryStateText}>
+              {batteryState}
+            </Text>
           </View>
           <View style={styles.batteryRow}>
             <Text style={styles.batteryPercentage}>
@@ -231,6 +235,10 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
       </ScrollView>
+
+      {/* AdMob Banner at bottom of screen */}
+      <AdBanner />
+
     </View>
   );
 }

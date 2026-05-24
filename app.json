@@ -52,10 +52,16 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#1a1a2e"
+          "color": "#0d7377"
         }
       ],
-      "react-native-google-mobile-ads"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ]
   }
 }
