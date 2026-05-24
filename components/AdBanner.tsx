@@ -1,53 +1,19 @@
 // components/AdBanner.tsx
-// AdMob banner advertisement component for FieldReportX
-// Displays Google AdMob test banner ad
+// Mock AdMob banner for Expo Go development
+// Real AdMob banner will load in production APK build
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
-
-// Use test IDs for development
-// Replace with real IDs before publishing to App Store
-const adUnitId = Platform.select({
-  ios: TestIds.BANNER,
-  android: TestIds.BANNER,
-}) as string;
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function AdBanner() {
-  const [adLoaded, setAdLoaded] = useState(false);
-  const [adError, setAdError] = useState(false);
-
   return (
     <View style={styles.container}>
-      {/* Ad Label */}
       <Text style={styles.adLabel}>Advertisement</Text>
-
-      {/* AdMob Banner */}
-      <BannerAd
-        unitId={adUnitId}
-        size={BannerAdSize.BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-        onAdLoaded={() => {
-          setAdLoaded(true);
-          setAdError(false);
-          console.log('AdMob banner loaded successfully');
-        }}
-        onAdFailedToLoad={(error) => {
-          setAdError(true);
-          console.log('AdMob banner failed to load:', error);
-        }}
-      />
-
-      {/* Error State */}
-      {adError && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Ad unavailable
-          </Text>
-        </View>
-      )}
+      <View style={styles.adBanner}>
+        <Text style={styles.adText}>
+          🏗️ FieldReportX Pro — Upgrade for unlimited reports
+        </Text>
+      </View>
     </View>
   );
 }
@@ -67,13 +33,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  errorContainer: {
-    height: 50,
-    justifyContent: 'center',
+  adBanner: {
+    backgroundColor: '#e8f5f5',
+    borderWidth: 1,
+    borderColor: '#0d7377',
+    borderRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    width: 320,
     alignItems: 'center',
   },
-  errorText: {
-    fontSize: 12,
-    color: '#ccc',
+  adText: {
+    fontSize: 13,
+    color: '#0d7377',
+    fontWeight: '600',
   },
 });
