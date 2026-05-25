@@ -1,6 +1,6 @@
 // screens/ReportFormScreen.tsx
 // Report form screen for FieldReportX
-// Professional redesign with teal and gold theme
+// Supports multiple photo attachments
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -13,6 +13,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  FlatList,
   StatusBar,
 } from 'react-native';
 import * as Location from 'expo-location';
@@ -27,7 +28,7 @@ export default function ReportFormScreen() {
   const [location, setLocation] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -65,7 +66,12 @@ export default function ReportFormScreen() {
     }
   };
 
-  const handlePhoto = async () => {
+  // Add photo from camera or gallery
+  const handleAddPhoto = async () => {
+    if (photos.length >= 5) {
+      Alert.alert('Limit Reached', 'Maximum 5 photos allowed per report');
+      return;
+    }
     Alert.alert(
       'Add Photo',
       'Choose an option',
@@ -85,7 +91,7 @@ export default function ReportFormScreen() {
               quality: 0.8,
             });
             if (!result.canceled) {
-              setPhoto(result.assets[0].uri);
+              setPhotos([...photos, result.assets[0].uri]);
             }
           },
         },
@@ -94,11 +100,13 @@ export default function ReportFormScreen() {
           onPress: async () => {
             const result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
+              allowsMultipleSelection: true,
+              selectionLimit: 5 - photos.length,
               quality: 0.8,
             });
             if (!result.canceled) {
-              setPhoto(result.assets[0].uri);
+              const newPhotos = result.assets.map((a) => a.uri);
+              setPhotos([...photos, ...newPhotos].slice(0, 5));
             }
           },
         },
@@ -107,6 +115,26 @@ export default function ReportFormScreen() {
     );
   };
 
+  // Remove photo
+  const handleRemovePhoto = (index: number) => {
+    Alert.alert(
+      'Remove Photo',
+      'Are you sure you want to remove this photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            const newPhotos = photos.filter((_, i) => i !== index);
+            setPhotos(newPhotos);
+          },
+        },
+      ]
+    );
+  };
+
+  // Submit report
   const handleSubmit = async () => {
     if (!title || !notes) {
       Alert.alert('Missing Fields', 'Please fill in title and notes');
@@ -119,6 +147,10 @@ export default function ReportFormScreen() {
         Alert.alert('Error', 'You must be logged in');
         return;
       }
+
+      // Use first photo as main photo URL
+      const photoUrl = photos.length > 0 ? photos[0] : '';
+
       const firebaseId = await addReport({
         title,
         notes,
@@ -127,8 +159,9 @@ export default function ReportFormScreen() {
         userId: user.uid,
         latitude: latitude || 0,
         longitude: longitude || 0,
-        photoUrl: photo || '',
+        photoUrl,
       });
+
       insertReport({
         firebaseId,
         title,
@@ -140,17 +173,19 @@ export default function ReportFormScreen() {
         createdAt: new Date().toISOString(),
         synced: 1,
       });
+
       await sendReportSubmittedNotification(title);
+
       Alert.alert(
         '✅ Report Submitted',
-        'Your field report has been submitted successfully.',
+        `Your field report has been submitted with ${photos.length} photo${photos.length !== 1 ? 's' : ''}.`,
         [
           {
             text: 'OK',
             onPress: () => {
               setTitle('');
               setNotes('');
-              setPhoto(null);
+              setPhotos([]);
               getLocation();
             },
           },
@@ -237,33 +272,69 @@ export default function ReportFormScreen() {
           />
         </View>
 
-        {/* Photo */}
+        {/* Photos */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>📷 Photo</Text>
-          {photo ? (
-            <View style={styles.photoContainer}>
-              <Image
-                source={{ uri: photo }}
-                style={styles.photoPreview}
-              />
+          <View style={styles.photoHeader}>
+            <Text style={styles.sectionLabel}>
+              📷 Photos ({photos.length}/5)
+            </Text>
+            {photos.length < 5 && (
               <TouchableOpacity
-                style={styles.changePhotoButton}
-                onPress={handlePhoto}
+                style={styles.addPhotoButton}
+                onPress={handleAddPhoto}
               >
-                <Text style={styles.changePhotoText}>
-                  Change Photo
+                <Text style={styles.addPhotoButtonText}>
+                  + Add Photo
                 </Text>
               </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Photo Grid */}
+          {photos.length > 0 ? (
+            <View style={styles.photoGrid}>
+              {photos.map((photo, index) => (
+                <View key={index} style={styles.photoItem}>
+                  <Image
+                    source={{ uri: photo }}
+                    style={styles.photoThumbnail}
+                  />
+                  <TouchableOpacity
+                    style={styles.removePhotoButton}
+                    onPress={() => handleRemovePhoto(index)}
+                  >
+                    <Text style={styles.removePhotoText}>✕</Text>
+                  </TouchableOpacity>
+                  {index === 0 && (
+                    <View style={styles.mainPhotoBadge}>
+                      <Text style={styles.mainPhotoBadgeText}>
+                        Main
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+
+              {/* Add More Button */}
+              {photos.length < 5 && (
+                <TouchableOpacity
+                  style={styles.addMoreButton}
+                  onPress={handleAddPhoto}
+                >
+                  <Text style={styles.addMoreIcon}>+</Text>
+                  <Text style={styles.addMoreText}>Add</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <TouchableOpacity
               style={styles.photoButton}
-              onPress={handlePhoto}
+              onPress={handleAddPhoto}
             >
               <Text style={styles.photoButtonIcon}>📷</Text>
-              <Text style={styles.photoButtonText}>Add Photo</Text>
+              <Text style={styles.photoButtonText}>Add Photos</Text>
               <Text style={styles.photoButtonSubtext}>
-                Take photo or choose from gallery
+                Take photos or choose from gallery (up to 5)
               </Text>
             </TouchableOpacity>
           )}
@@ -384,6 +455,91 @@ const styles = StyleSheet.create({
     color: '#0d7377',
     fontWeight: '600',
   },
+  photoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  addPhotoButton: {
+    backgroundColor: '#0d7377',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  addPhotoButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  photoItem: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: 'visible',
+  },
+  photoThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    backgroundColor: '#e63946',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  removePhotoText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  mainPhotoBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    backgroundColor: '#0d7377',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  mainPhotoBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  addMoreButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#0d7377',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e8f5f5',
+  },
+  addMoreIcon: {
+    fontSize: 24,
+    color: '#0d7377',
+    fontWeight: 'bold',
+  },
+  addMoreText: {
+    fontSize: 12,
+    color: '#0d7377',
+    fontWeight: '600',
+  },
   photoButton: {
     backgroundColor: '#fff',
     borderWidth: 2,
@@ -406,26 +562,6 @@ const styles = StyleSheet.create({
   photoButtonSubtext: {
     fontSize: 12,
     color: '#aaa',
-  },
-  photoContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  photoPreview: {
-    width: '100%',
-    height: 220,
-    borderRadius: 12,
-  },
-  changePhotoButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
-    alignItems: 'center',
-    marginTop: -40,
-  },
-  changePhotoText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
   },
   submitButton: {
     backgroundColor: '#0d7377',

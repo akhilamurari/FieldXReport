@@ -1,6 +1,7 @@
 // screens/MapScreen.tsx
 // Map screen for FieldReportX
-// Professional redesign with teal and gold theme
+// Shows all submitted reports as markers on a map
+// iOS only — Android support coming in next update
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -11,10 +12,22 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { auth, getUserReports, Report } from '../services/firebase';
+
+// Only import maps on iOS
+let MapView: any = null;
+let Marker: any = null;
+let Circle: any = null;
+
+if (Platform.OS === 'ios') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+  Circle = Maps.Circle;
+}
 
 export default function MapScreen() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -28,7 +41,11 @@ export default function MapScreen() {
   );
 
   useEffect(() => {
-    getLocationAndReports();
+    if (Platform.OS === 'ios') {
+      getLocationAndReports();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const getLocationAndReports = async () => {
@@ -55,6 +72,51 @@ export default function MapScreen() {
       setLoading(false);
     }
   };
+
+  // Show Android not supported screen
+  if (Platform.OS === 'android') {
+    return (
+      <View style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#0d7377"
+        />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Report Map</Text>
+          <Text style={styles.headerSubtitle}>
+            View report locations
+          </Text>
+        </View>
+        <View style={styles.unsupportedContainer}>
+          <Text style={styles.unsupportedIcon}>🗺️</Text>
+          <Text style={styles.unsupportedTitle}>
+            Map Feature
+          </Text>
+          <Text style={styles.unsupportedText}>
+            The interactive map is optimised for iOS devices.
+            {'\n\n'}
+            On Android, your reports are still saved with GPS
+            coordinates and can be viewed in the My Reports screen.
+            {'\n\n'}
+            Full Android map support is planned for the next
+            version of FieldReportX.
+          </Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoText}>
+              📍 All reports are GPS tagged
+            </Text>
+            <Text style={styles.infoText}>
+              📋 View reports in My Reports tab
+            </Text>
+            <Text style={styles.infoText}>
+              🔄 Coordinates saved to Firebase
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -85,44 +147,46 @@ export default function MapScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Map */}
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: currentLocation?.latitude || -37.8136,
-          longitude: currentLocation?.longitude || 144.9631,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-      >
-        {/* Report Markers */}
-        {reports.map((report) => (
-          <Marker
-            key={report.id}
-            coordinate={{
-              latitude: report.latitude || 0,
-              longitude: report.longitude || 0,
-            }}
-            title={report.title}
-            description={report.location}
-            pinColor="#0d7377"
-            onPress={() => setSelectedReport(report)}
-          />
-        ))}
+      {/* Map - iOS Only */}
+      {MapView && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: currentLocation?.latitude || -37.8136,
+            longitude: currentLocation?.longitude || 144.9631,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+        >
+          {/* Report Markers */}
+          {reports.map((report) => (
+            <Marker
+              key={report.id}
+              coordinate={{
+                latitude: report.latitude || 0,
+                longitude: report.longitude || 0,
+              }}
+              title={report.title}
+              description={report.location}
+              pinColor="#0d7377"
+              onPress={() => setSelectedReport(report)}
+            />
+          ))}
 
-        {/* Circle around current location */}
-        {currentLocation && (
-          <Circle
-            center={currentLocation}
-            radius={100}
-            fillColor="rgba(13, 115, 119, 0.1)"
-            strokeColor="rgba(13, 115, 119, 0.3)"
-            strokeWidth={2}
-          />
-        )}
-      </MapView>
+          {/* Circle around current location */}
+          {currentLocation && (
+            <Circle
+              center={currentLocation}
+              radius={100}
+              fillColor="rgba(13, 115, 119, 0.1)"
+              strokeColor="rgba(13, 115, 119, 0.3)"
+              strokeWidth={2}
+            />
+          )}
+        </MapView>
+      )}
 
       {/* Selected Report Card */}
       {selectedReport && (
@@ -160,7 +224,6 @@ export default function MapScreen() {
           </View>
         </View>
       )}
-
     </View>
   );
 }
@@ -213,6 +276,42 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  unsupportedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  unsupportedIcon: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  unsupportedTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#14213d',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  unsupportedText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  infoCard: {
+    backgroundColor: '#e8f5f5',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    gap: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#0d7377',
+    fontWeight: '600',
   },
   reportCard: {
     position: 'absolute',

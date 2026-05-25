@@ -1,7 +1,7 @@
 // screens/HomeScreen.tsx
 // Home screen for FieldReportX
 // Professional redesign with teal and gold theme
-// Includes AdMob banner advertisement
+// Includes AdMob banner advertisement and real stats
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -14,7 +14,8 @@ import {
   StatusBar,
 } from 'react-native';
 import * as Battery from 'expo-battery';
-import { auth, logoutUser } from '../services/firebase';
+import * as Location from 'expo-location';
+import { auth, logoutUser, getUserReports } from '../services/firebase';
 import AdBanner from '../components/AdBanner';
 
 export default function HomeScreen({ navigation }: any) {
@@ -22,12 +23,17 @@ export default function HomeScreen({ navigation }: any) {
   const [batteryState, setBatteryState] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [reportCount, setReportCount] = useState<number>(0);
+  const [gpsStatus, setGpsStatus] = useState<string>('Checking...');
+  const [syncStatus, setSyncStatus] = useState<string>('Synced');
 
   useEffect(() => {
     // Get current user
     const user = auth.currentUser;
     if (user) {
       setUserName(user.email || 'Field Worker');
+      // Get report count
+      loadReportCount(user.uid);
     }
 
     // Get current date
@@ -57,6 +63,22 @@ export default function HomeScreen({ navigation }: any) {
     };
     getBattery();
 
+    // Check GPS status
+    const checkGPS = async () => {
+      try {
+        const { status } =
+          await Location.getForegroundPermissionsAsync();
+        if (status === 'granted') {
+          setGpsStatus('Active');
+        } else {
+          setGpsStatus('Disabled');
+        }
+      } catch {
+        setGpsStatus('Unavailable');
+      }
+    };
+    checkGPS();
+
     // Subscribe to battery updates
     const batterySubscription = Battery.addBatteryLevelListener(
       ({ batteryLevel }) => {
@@ -68,6 +90,17 @@ export default function HomeScreen({ navigation }: any) {
       batterySubscription.remove();
     };
   }, []);
+
+  // Load report count from Firestore
+  const loadReportCount = async (userId: string) => {
+    try {
+      const reports = await getUserReports(userId);
+      setReportCount(reports.length);
+      setSyncStatus('Synced');
+    } catch {
+      setSyncStatus('Offline');
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -157,17 +190,35 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Quick Stats Row */}
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
+          <TouchableOpacity
+            style={styles.statCard}
+            onPress={() => navigation.navigate('MyReports')}
+          >
             <Text style={styles.statIcon}>📋</Text>
+            <Text style={styles.statValue}>{reportCount}</Text>
             <Text style={styles.statLabel}>Reports</Text>
-          </View>
+          </TouchableOpacity>
+
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>📍</Text>
-            <Text style={styles.statLabel}>GPS Active</Text>
+            <Text style={[
+              styles.statValue,
+              { color: gpsStatus === 'Active' ? '#2d6a4f' : '#e63946' }
+            ]}>
+              {gpsStatus === 'Active' ? '✓' : '✗'}
+            </Text>
+            <Text style={styles.statLabel}>GPS</Text>
           </View>
+
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>☁️</Text>
-            <Text style={styles.statLabel}>Synced</Text>
+            <Text style={[
+              styles.statValue,
+              { color: syncStatus === 'Synced' ? '#2d6a4f' : '#e63946' }
+            ]}>
+              {syncStatus === 'Synced' ? '✓' : '✗'}
+            </Text>
+            <Text style={styles.statLabel}>{syncStatus}</Text>
           </View>
         </View>
 
@@ -214,7 +265,6 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
 
           {/* Sensors */}
-{/* Sensors */}
           <TouchableOpacity
             style={[styles.actionCard, styles.actionCardSensors]}
             onPress={() => navigation.navigate('Sensors')}
@@ -382,7 +432,13 @@ const styles = StyleSheet.create({
   },
   statIcon: {
     fontSize: 24,
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#14213d',
+    marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
